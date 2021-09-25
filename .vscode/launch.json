@@ -1,0 +1,45 @@
+{
+  // IntelliSense を使用して利用可能な属性を学べます。
+  // 既存の属性の説明をホバーして表示します。
+  // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'main' benchmark",
+      "cargo": {
+        "args": [
+          "build",
+          "--bench=main",
+          "--package=min-regex"
+        ],
+        "filter": {
+          "name": "min-regex",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug unit tests in executable 'min-regex'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=min-regex",
+          "--package=min-regex"
+        ],
+        "filter": {
+          "name": "min-regex",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
