@@ -88,4 +88,25 @@ mod test {
     assert!(!test(node, "bb"));
     assert!(!test(node, "ab"));
   }
+
+  #[test]
+  fn concat_test() {
+    let node = &ast::concat(&[ast::literal("a"), ast::literal("b")]);
+    assert!(test(node, "ab"));
+    assert!(!test(node, "abb"));
+    assert!(!test(node, "aab"));
+    assert!(!test(node, "a"));
+    assert!(!test(node, "b"));
+  }
+
+  #[test]
+  fn repeat_test() {
+    let node = &ast::repeat(ast::literal("a"));
+    assert!(test(node, ""));
+    assert!(test(node, "a"));
+    assert!(test(node, "aa"));
+    assert!(test(node, "aaa"));
+    assert!(!test(node, "ba"));
+    assert!(!test(node, "ab"));
+  }
 }
