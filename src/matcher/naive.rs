@@ -60,7 +60,7 @@ pub fn test(node: &Node, target: &str) -> bool {
 
 #[cfg(test)]
 mod test {
-  use crate::machine::naive::{is_prefix_of, test};
+  use super::{is_prefix_of, test};
   use crate::ast;
 
   #[test]
