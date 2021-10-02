@@ -7,3 +7,5 @@
 - Benchmarking
   - [bheisler/criterion.rs: Statistics-driven benchmarking library for Rust](https://github.com/bheisler/criterion.rs)
   - [Criterion.rs - Criterion.rs Documentation](https://bheisler.github.io/criterion.rs/book/)
+- Regex VM impl
+  - [VM型の正規表現エンジンを実装する - Qiita](https://qiita.com/yyu/items/84b1a00459408d1a7321)
