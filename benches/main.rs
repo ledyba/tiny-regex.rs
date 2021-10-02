@@ -7,7 +7,7 @@ fn create_regex1() -> Node {
 }
 
 fn naive_benchmark(c: &mut Criterion) {
-  use tiny_regex::matcher::naive;
+  use tiny_regex::engine::naive;
   let node = create_regex1();
   c.bench_function(
     "naive: simple",
