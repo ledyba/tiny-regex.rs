@@ -1,4 +1,10 @@
-#
+# Tiny Regex Engine
+
+For study.
+
+# LICENSE
+
+GPL v3 or later.
 
 # References
 
