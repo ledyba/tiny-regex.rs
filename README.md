@@ -2,6 +2,16 @@
 
 For study.
 
+# Implemented engines
+
+- Naive engine
+  - It uses AST directly to match strings.
+- VM engine
+  - TODO
+  - JIT engine?
+- DFA engine
+  - TODO
+
 # LICENSE
 
 GPL v3 or later.
