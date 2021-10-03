@@ -8,11 +8,19 @@ fn create_regex1() -> Node {
 
 fn naive_benchmark(c: &mut Criterion) {
   use tiny_regex::engine::naive;
+  use tiny_regex::engine::vm;
   let node = create_regex1();
   c.bench_function(
     "naive: simple",
     |b| b.iter(|| {
       naive::test(&node, black_box("test"));
+    })
+  );
+  let codes = vm::compile(&node);
+  c.bench_function(
+    "vm: simple",
+    |b| b.iter(|| {
+      vm::test(&codes, black_box("test"));
     })
   );
 }

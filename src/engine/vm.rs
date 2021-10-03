@@ -1,22 +1,70 @@
+use std::str::Chars;
+
 use crate::ast::Node;
 pub enum OpCode {
   Consume(char),
 }
 
-pub fn test(codes: &Vec<OpCode>, target: &str) -> bool {
-  let mut pc: usize = 0;
-  let end = codes.len();
-  let mut target = target;
-  loop {
-    if pc == end {
-      return target.len() == 0;
-    }
-    match &codes[pc] {
-      OpCode::Consume(ch) => {
+struct Thread {
+  pc: usize,
+  sp: usize,
+}
 
-      }
+struct Machine<'a> {
+  string: Vec<char>,
+  str_len: usize,
+  threads: Vec<Thread>,
+  codes: &'a Vec<OpCode>,
+  codes_len: usize,
+}
+
+impl <'a> Machine<'a> {
+  fn new(codes: &'a Vec<OpCode>, string: &'a str) -> Self {
+    let string: Vec<char> = string.chars().collect();
+    let str_len = string.len();
+    Self {
+      string,
+      str_len,
+      threads: Vec::new(),
+      codes,
+      codes_len: codes.len(),
     }
   }
+  fn start(&mut self) -> bool {
+    self.threads.push(Thread {
+      pc: 0,
+      sp: 0,
+    });
+    while self.threads.len() > 0 {
+      if self.schedule_thread() {
+        return true;
+      }
+    }
+    false
+  }
+  fn schedule_thread(&mut self) -> bool {
+    let mut th = &mut self.threads.last_mut().expect("No threads");
+    loop {
+      if th.pc == self.codes_len {
+        return th.sp == self.str_len;
+      }
+      match &self.codes[th.pc] {
+        OpCode::Consume(ch) => {
+          if *ch == self.string[th.sp] {
+            th.sp += 1;
+            th.pc += 1;
+            continue;
+          }
+          return false;
+        }
+      }
+    }
+  
+  }
+}
+
+pub fn test(codes: &Vec<OpCode>, string: &str) -> bool {
+  Machine::new(codes, string).start()
 }
 
 pub fn compile(node: &Node) -> Vec<OpCode> {
