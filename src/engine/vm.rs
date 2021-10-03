@@ -43,7 +43,7 @@ impl <'a> Machine<'a> {
     false
   }
   fn schedule_thread(&mut self) -> bool {
-    let mut th = &mut self.threads.last_mut().expect("No threads");
+    let mut th = &mut self.threads.pop().expect("No threads");
     loop {
       if th.pc == self.codes_len {
         return th.sp == self.str_len;
