@@ -1,8 +1,8 @@
-use std::str::Chars;
-
 use crate::ast::Node;
 pub enum OpCode {
   Consume(char),
+  Fork(isize),
+  Jump(isize),
 }
 
 struct Thread {
@@ -35,7 +35,7 @@ impl <'a> Machine<'a> {
       pc: 0,
       sp: 0,
     });
-    while self.threads.len() > 0 {
+    while !self.threads.is_empty() {
       if self.schedule_thread() {
         return true;
       }
@@ -48,6 +48,9 @@ impl <'a> Machine<'a> {
       if th.pc == self.codes_len {
         return th.sp == self.str_len;
       }
+      if th.sp >= self.str_len {
+        return false;
+      }
       match &self.codes[th.pc] {
         OpCode::Consume(ch) => {
           if *ch == self.string[th.sp] {
@@ -56,6 +59,16 @@ impl <'a> Machine<'a> {
             continue;
           }
           return false;
+        }
+        OpCode::Fork(b) => {
+          self.threads.push(Thread{
+            pc: ((th.pc as isize) + *b) as usize,
+            sp: th.sp,
+          });
+          th.pc += 1;
+        }
+        OpCode::Jump(n) => {
+          th.pc = ((th.pc as isize) + *n) as usize;
         }
       }
     }
@@ -82,8 +95,34 @@ pub fn compile(node: &Node) -> Vec<OpCode> {
         .flatten()
         .collect()
     }
+    Node::Repeat(node) => {
+      let mut codes = Vec::new();
+      codes.push(OpCode::Fork(0));
+      let mut body = compile(&node);
+      let body_len = body.len();
+      codes.append(&mut body);
+      codes.push(OpCode::Jump(-(body_len as isize) - 1));
+      // Fix jump indecies
+      codes[0] = OpCode::Fork((body_len + 1) as isize);
+      codes
+    }
     _ => {
       unimplemented!();
     }
+  }
+}
+
+#[cfg(test)]
+mod test {
+  use super::{test, compile};
+  use crate::{ast};
+
+  #[test]
+  fn literal_test() {
+    let node = ast::literal("abc");
+    let codes = compile(&node);
+    assert!(test(&codes, "abc"));
+    assert!(!test(&codes, "ab"));
+    assert!(!test(&codes, "abcd"));
   }
 }

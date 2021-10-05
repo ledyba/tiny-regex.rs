@@ -3,7 +3,7 @@ use tiny_regex::ast;
 use tiny_regex::ast::Node;
 
 fn create_regex1() -> Node {
-  ast::literal("test")
+  ast::concat(&[ast::repeat(ast::literal("a")), ast::repeat(ast::literal("b"))])
 }
 
 fn naive_benchmark(c: &mut Criterion) {
@@ -13,14 +13,14 @@ fn naive_benchmark(c: &mut Criterion) {
   c.bench_function(
     "naive: simple",
     |b| b.iter(|| {
-      naive::test(&node, black_box("test"));
+      naive::test(&node, black_box("aaaabbbb"));
     })
   );
   let codes = vm::compile(&node);
   c.bench_function(
     "vm: simple",
     |b| b.iter(|| {
-      vm::test(&codes, black_box("test"));
+      vm::test(&codes, black_box("aaaabbbb"));
     })
   );
 }
