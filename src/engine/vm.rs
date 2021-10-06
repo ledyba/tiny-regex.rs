@@ -48,12 +48,9 @@ impl <'a> Machine<'a> {
       if th.pc == self.codes_len {
         return th.sp == self.str_len;
       }
-      if th.sp >= self.str_len {
-        return false;
-      }
       match &self.codes[th.pc] {
         OpCode::Consume(ch) => {
-          if *ch == self.string[th.sp] {
+          if Some(ch) == self.string.get(th.sp) {
             th.sp += 1;
             th.pc += 1;
             continue;
@@ -98,12 +95,14 @@ pub fn compile(node: &Node) -> Vec<OpCode> {
     Node::Repeat(node) => {
       let mut codes = Vec::new();
       codes.push(OpCode::Fork(0));
+
       let mut body = compile(&node);
       let body_len = body.len();
       codes.append(&mut body);
+
       codes.push(OpCode::Jump(-(body_len as isize) - 1));
       // Fix jump indecies
-      codes[0] = OpCode::Fork((body_len + 1) as isize);
+      codes[0] = OpCode::Fork((body_len + 2) as isize);
       codes
     }
     _ => {
@@ -124,5 +123,17 @@ mod test {
     assert!(test(&codes, "abc"));
     assert!(!test(&codes, "ab"));
     assert!(!test(&codes, "abcd"));
+  }
+
+  #[test]
+  fn repeat_test() {
+    let node = ast::repeat(ast::literal("a"));
+    let codes = compile(&node);
+    assert!(test(&codes, ""));
+    assert!(test(&codes, "a"));
+    assert!(test(&codes, "aa"));
+    assert!(!test(&codes, "ab"));
+    assert!(!test(&codes, "aab"));
+    assert!(!test(&codes, "baa"));
   }
 }
