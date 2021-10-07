@@ -3,6 +3,7 @@ pub enum OpCode {
   Consume(char),
   Fork(isize),
   Jump(isize),
+  Fail,
 }
 
 struct Thread {
@@ -67,6 +68,9 @@ impl <'a> Machine<'a> {
         OpCode::Jump(n) => {
           th.pc = ((th.pc as isize) + *n) as usize;
         }
+        OpCode::Fail => {
+          return false;
+        }
       }
     }
   
@@ -105,8 +109,25 @@ pub fn compile(node: &Node) -> Vec<OpCode> {
       codes[0] = OpCode::Fork((body_len + 2) as isize);
       codes
     }
-    _ => {
-      unimplemented!();
+    Node::Or(noedes) => {
+      let mut jmp_offsets = Vec::<usize>::new();
+      let mut codes = Vec::<OpCode>::new();
+      for node in noedes {
+        let current = codes.len();
+        codes.push(OpCode::Fork(0));
+        let mut body = compile(node);
+        let body_len = body.len();
+        codes.append(&mut body);
+        jmp_offsets.push(codes.len());
+        codes.push(OpCode::Jump(0));
+        codes[current] = OpCode::Fork((body_len as isize) + 2);
+      }
+      codes.push(OpCode::Fail);
+      let codes_len = codes.len();
+      for offset in &jmp_offsets {
+        codes[*offset] = OpCode::Jump((codes_len - offset) as isize);
+      }
+      codes
     }
   }
 }
@@ -135,5 +156,15 @@ mod test {
     assert!(!test(&codes, "ab"));
     assert!(!test(&codes, "aab"));
     assert!(!test(&codes, "baa"));
+  }
+  #[test]
+  fn or_test() {
+    let node = ast::or(&[ast::literal("a"), ast::literal("b"), ast::literal("c")]);
+    let codes = compile(&node);
+    assert!(!test(&codes, ""));
+    assert!(test(&codes, "a"));
+    assert!(test(&codes, "b"));
+    assert!(test(&codes, "c"));
+    assert!(!test(&codes, "d"));
   }
 }
