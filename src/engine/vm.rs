@@ -1,6 +1,6 @@
 use crate::ast::Node;
 pub enum OpCode {
-  Consume(char),
+  Consume(String),
   Fork(isize),
   Jump(isize),
   Fail,
@@ -12,7 +12,7 @@ struct Thread {
 }
 
 struct Machine<'a> {
-  string: Vec<char>,
+  string: String,
   str_len: usize,
   threads: Vec<Thread>,
   codes: &'a Vec<OpCode>,
@@ -21,7 +21,7 @@ struct Machine<'a> {
 
 impl <'a> Machine<'a> {
   fn new(codes: &'a Vec<OpCode>, string: &'a str) -> Self {
-    let string: Vec<char> = string.chars().collect();
+    let string = string.to_string();
     let str_len = string.len();
     Self {
       string,
@@ -50,11 +50,14 @@ impl <'a> Machine<'a> {
         return th.sp == self.str_len;
       }
       match &self.codes[th.pc] {
-        OpCode::Consume(ch) => {
-          if Some(ch) == self.string.get(th.sp) {
-            th.sp += 1;
-            th.pc += 1;
-            continue;
+        OpCode::Consume(str) => {
+          let str_len = str.len();
+          if th.sp + str_len <= self.str_len {
+            if self.string[th.sp..].starts_with(str) {
+              th.sp += str_len;
+              th.pc += 1;
+              continue;
+            }
           }
           return false;
         }
@@ -84,10 +87,7 @@ pub fn test(codes: &Vec<OpCode>, string: &str) -> bool {
 pub fn compile(node: &Node) -> Vec<OpCode> {
   match node {
     Node::Literal(literal) => {
-      literal
-        .chars()
-        .map(|c| OpCode::Consume(c))
-        .collect()
+      vec![OpCode::Consume(literal.clone())]
     }
     Node::Concat(nodes) => {
       nodes
