@@ -3,7 +3,9 @@ use tiny_regex::ast;
 use tiny_regex::ast::Node;
 
 fn create_regex1() -> Node {
-  ast::concat(&[ast::repeat(ast::literal("a")), ast::repeat(ast::literal("b"))])
+  let or = ast::or(&[ast::literal("a"), ast::literal("b"), ast::literal("c")]);
+  let rep = ast::repeat(or);
+  ast::concat(&[rep.clone(), rep.clone()])
 }
 
 fn naive_benchmark(c: &mut Criterion) {
