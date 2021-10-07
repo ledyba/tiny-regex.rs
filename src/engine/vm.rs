@@ -6,26 +6,22 @@ pub enum OpCode {
   Fail,
 }
 
-struct Thread {
+struct Thread<'a> {
   pc: usize,
-  sp: usize,
+  sp: &'a str,
 }
 
 struct Machine<'a> {
-  string: String,
-  str_len: usize,
-  threads: Vec<Thread>,
+  string: &'a str,
+  threads: Vec<Thread<'a>>,
   codes: &'a Vec<OpCode>,
   codes_len: usize,
 }
 
 impl <'a> Machine<'a> {
   fn new(codes: &'a Vec<OpCode>, string: &'a str) -> Self {
-    let string = string.to_string();
-    let str_len = string.len();
     Self {
       string,
-      str_len,
       threads: Vec::new(),
       codes,
       codes_len: codes.len(),
@@ -34,7 +30,7 @@ impl <'a> Machine<'a> {
   fn start(&mut self) -> bool {
     self.threads.push(Thread {
       pc: 0,
-      sp: 0,
+      sp: self.string,
     });
     while !self.threads.is_empty() {
       if self.schedule_thread() {
@@ -47,17 +43,14 @@ impl <'a> Machine<'a> {
     let mut th = &mut self.threads.pop().expect("No threads");
     loop {
       if th.pc == self.codes_len {
-        return th.sp == self.str_len;
+        return th.sp.is_empty();
       }
       match &self.codes[th.pc] {
         OpCode::Consume(str) => {
-          let str_len = str.len();
-          if th.sp + str_len <= self.str_len {
-            if self.string[th.sp..].starts_with(str) {
-              th.sp += str_len;
-              th.pc += 1;
-              continue;
-            }
+          if th.sp.starts_with(str) {
+            th.sp = &th.sp[str.len()..];
+            th.pc += 1;
+            continue;
           }
           return false;
         }
