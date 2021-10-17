@@ -74,6 +74,7 @@ mod test {
   #[test]
   fn literal_test() {
     assert!(test(&ast::literal("test"), "test"));
+    assert!(test(&ast::literal(""), ""));
     assert!(!test(&ast::literal("test"), ""));
     assert!(!test(&ast::literal("test"), "test1"));
     assert!(!test(&ast::literal("test"), "tes"));
