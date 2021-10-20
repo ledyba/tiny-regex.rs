@@ -69,7 +69,6 @@ impl <'a> Machine<'a> {
         }
       }
     }
-  
   }
 }
 
