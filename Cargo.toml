@@ -1,9 +1,9 @@
 [package]
 name = "tiny-regex"
 version = "0.1.0"
-authors = ["Kaede Fujisaki <kaede@hexe.net>"]
 edition = "2021"
-license = "GPL-3.0-or-later"
+authors = ["Kaede Fujisaki <kaede@hexe.net>"]
+license = "AGPL-3.0-or-later"
 
 [dependencies]
 dynasmrt = "1.1.0"
