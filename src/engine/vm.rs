@@ -1,36 +1,66 @@
 use crate::ast::Node;
+
+#[derive(Debug)]
 pub enum OpCode {
-  Consume(String),
+  Consume1(char),
+  Consume(Vec<char>),
   Fork(isize),
   Jump(isize),
   Fail,
 }
 
-struct Thread<'a> {
+impl std::fmt::Display for OpCode {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Self::Consume1(s)  => f.write_fmt(format_args!("Consume1 {}", s)),
+      Self::Consume(s) => f.write_fmt(format_args!("Consume  {:?}", s)),
+      Self::Fork(delta) => f.write_fmt(format_args!("Fork     {:+}", delta)),
+      Self::Jump(delta) => f.write_fmt(format_args!("Jump     {:+}", delta)),
+      Self::Fail => write!(f, "Fail"),
+    }
+  }
+}
+
+
+#[derive(Debug)]
+pub struct Program {
+  codes: Vec<OpCode>,
+}
+
+impl std::fmt::Display for Program {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "[\n").unwrap();
+    for code in &self.codes {
+      write!(f, "  {}\n", code).unwrap();
+    }
+    write!(f, "]").unwrap();
+    Ok(())
+  }
+}
+
+struct Thread {
   pc: usize,
-  sp: &'a str,
+  sp: usize,
 }
 
 struct Machine<'a> {
-  string: &'a str,
-  threads: Vec<Thread<'a>>,
-  codes: &'a Vec<OpCode>,
-  codes_len: usize,
+  chars: Vec<char>,
+  threads: Vec<Thread>,
+  program: &'a Program,
 }
 
 impl <'a> Machine<'a> {
-  fn new(codes: &'a Vec<OpCode>, string: &'a str) -> Self {
+  fn new(program: &'a Program, string: &'a str) -> Self {
     Self {
-      string,
+      chars: string.to_string().chars().collect(),
       threads: Vec::new(),
-      codes,
-      codes_len: codes.len(),
+      program,
     }
   }
   fn start(&mut self) -> bool {
     self.threads.push(Thread {
       pc: 0,
-      sp: self.string,
+      sp: 0,
     });
     while !self.threads.is_empty() {
       if self.schedule_thread() {
@@ -41,18 +71,28 @@ impl <'a> Machine<'a> {
   }
   fn schedule_thread(&mut self) -> bool {
     let mut th = &mut self.threads.pop().expect("No threads");
+    let codes = &self.program.codes;
+    let codes_len = self.program.codes.len();
     loop {
-      if th.pc == self.codes_len {
-        return th.sp.is_empty();
+      if th.pc == codes_len {
+        return th.sp == self.chars.len();
       }
-      match &self.codes[th.pc] {
-        OpCode::Consume(str) => {
-          if th.sp.starts_with(str) {
-            th.sp = &th.sp[str.len()..];
+      match &codes[th.pc] {
+        OpCode::Consume1(chr) => {
+          if self.chars.get(th.sp) == Some(chr) {
             th.pc += 1;
             continue;
           }
           return false;
+        }
+        OpCode::Consume(chars) => {
+          for chr in chars {
+            if self.chars.get(th.sp) == Some(chr) {
+              th.sp += 1;
+            } else {
+              return false;
+            }
+          }
         }
         OpCode::Fork(b) => {
           self.threads.push(Thread{
@@ -72,19 +112,30 @@ impl <'a> Machine<'a> {
   }
 }
 
-pub fn test(codes: &Vec<OpCode>, string: &str) -> bool {
-  Machine::new(codes, string).start()
+pub fn test(program: &Program, string: &str) -> bool {
+  Machine::new(program, string).start()
 }
 
-pub fn compile(node: &Node) -> Vec<OpCode> {
+pub fn compile(node: &Node) -> Program {
+  Program {
+    codes: compile_impl(node)
+  }
+}
+
+fn compile_impl(node: &Node) -> Vec<OpCode> {
   match node {
     Node::Literal(literal) => {
-      vec![OpCode::Consume(literal.clone())]
+      let chars = literal.chars().collect::<Vec<char>>();
+      if chars.len() > 1 {
+        vec![OpCode::Consume(chars)]
+      } else {
+        vec![OpCode::Consume1(*chars.get(0).unwrap())]
+      }
     }
     Node::Concat(nodes) => {
       nodes
         .iter()
-        .map(|node| compile(node))
+        .map(|node| compile_impl(node))
         .flatten()
         .collect()
     }
@@ -92,7 +143,7 @@ pub fn compile(node: &Node) -> Vec<OpCode> {
       let mut codes = Vec::new();
       codes.push(OpCode::Fork(0));
 
-      let mut body = compile(&node);
+      let mut body = compile_impl(&node);
       let body_len = body.len();
       codes.append(&mut body);
 
@@ -107,7 +158,7 @@ pub fn compile(node: &Node) -> Vec<OpCode> {
       for node in noedes {
         let current = codes.len();
         codes.push(OpCode::Fork(0));
-        let mut body = compile(node);
+        let mut body = compile_impl(node);
         let body_len = body.len();
         codes.append(&mut body);
         jmp_offsets.push(codes.len());
@@ -132,31 +183,32 @@ mod test {
   #[test]
   fn literal_test() {
     let node = ast::literal("abc");
-    let codes = compile(&node);
-    assert!(test(&codes, "abc"));
-    assert!(!test(&codes, "ab"));
-    assert!(!test(&codes, "abcd"));
+    let program = compile(&node);
+    assert!(test(&program, "abc"));
+    assert!(!test(&program, "ab"));
+    assert!(!test(&program, "abcd"));
   }
 
   #[test]
   fn repeat_test() {
     let node = ast::repeat(ast::literal("a"));
-    let codes = compile(&node);
-    assert!(test(&codes, ""));
-    assert!(test(&codes, "a"));
-    assert!(test(&codes, "aa"));
-    assert!(!test(&codes, "ab"));
-    assert!(!test(&codes, "aab"));
-    assert!(!test(&codes, "baa"));
+    let program = compile(&node);
+    println!("{}", program);
+    assert!(test(&program, ""));
+    assert!(test(&program, "a"));
+    assert!(test(&program, "aa"));
+    assert!(!test(&program, "ab"));
+    assert!(!test(&program, "aab"));
+    assert!(!test(&program, "baa"));
   }
   #[test]
   fn or_test() {
     let node = ast::or(&[ast::literal("a"), ast::literal("b"), ast::literal("c")]);
-    let codes = compile(&node);
-    assert!(!test(&codes, ""));
-    assert!(test(&codes, "a"));
-    assert!(test(&codes, "b"));
-    assert!(test(&codes, "c"));
-    assert!(!test(&codes, "d"));
+    let program = compile(&node);
+    assert!(!test(&program, ""));
+    assert!(test(&program, "a"));
+    assert!(test(&program, "b"));
+    assert!(test(&program, "c"));
+    assert!(!test(&program, "d"));
   }
 }
