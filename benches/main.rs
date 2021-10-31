@@ -1,11 +1,11 @@
 use criterion::{Criterion, criterion_group, criterion_main, black_box};
-use tiny_regex::ast;
 use tiny_regex::ast::Node;
 
 fn create_regex1() -> Node {
-  let or = ast::or(&[ast::literal("a"), ast::literal("b"), ast::literal("c")]);
-  let rep = ast::repeat(or);
-  ast::concat(&[rep.clone(), rep.clone()])
+  use tiny_regex::ast::{literal, or, repeat, concat};
+  let or = or(&[literal("a"), literal("b"), literal("c")]);
+  let rep = repeat(or);
+  concat(&[rep.clone(), rep.clone()])
 }
 
 fn naive_benchmark(c: &mut Criterion) {
