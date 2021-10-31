@@ -37,11 +37,11 @@ impl Program {
 
 impl std::fmt::Display for Program {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    write!(f, "[\n").unwrap();
+    write!(f, "---\n").unwrap();
     for code in &self.codes {
       write!(f, "  {}\n", code).unwrap();
     }
-    write!(f, "]").unwrap();
+    write!(f, "---").unwrap();
     Ok(())
   }
 }

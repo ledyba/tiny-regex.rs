@@ -19,7 +19,6 @@ fn naive_benchmark(c: &mut Criterion) {
     })
   );
   let program = vm::Program::new(&node);
-  println!("{}", program);
   c.bench_function(
     "vm: simple",
     |b| b.iter(|| {
