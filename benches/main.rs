@@ -18,12 +18,12 @@ fn naive_benchmark(c: &mut Criterion) {
       naive::test(&node, black_box("aaaabbbb"));
     })
   );
-  let codes = vm::compile(&node);
-  println!("{}", codes);
+  let program = vm::Program::new(&node);
+  println!("{}", program);
   c.bench_function(
     "vm: simple",
     |b| b.iter(|| {
-      vm::test(&codes, black_box("aaaabbbb"));
+      vm::test(&program, black_box("aaaabbbb"));
     })
   );
 }

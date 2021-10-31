@@ -89,9 +89,10 @@ impl <'a> Machine<'a> {
         OpCode::Consume1(chr) => {
           if self.chars.get(th.sp) == Some(chr) {
             th.pc += 1;
-            continue;
+            th.sp += 1;
+          } else {
+            return false;
           }
-          return false;
         }
         OpCode::Consume(chars) => {
           for chr in chars {
@@ -101,6 +102,7 @@ impl <'a> Machine<'a> {
               return false;
             }
           }
+          th.pc += 1;
         }
         OpCode::Fork(b) => {
           self.threads.push(Thread{
@@ -179,8 +181,8 @@ fn compile(node: &Node) -> Vec<OpCode> {
 
 #[cfg(test)]
 mod test {
-  use super::{test, compile};
-  use crate::{ast};
+  use super::{test, Program};
+  use crate::ast;
 
   #[test]
   fn literal_test() {
@@ -195,7 +197,6 @@ mod test {
   fn repeat_test() {
     let node = ast::repeat(ast::literal("a"));
     let program = Program::new(&node);
-    println!("{}", program);
     assert!(test(&program, ""));
     assert!(test(&program, "a"));
     assert!(test(&program, "aa"));
