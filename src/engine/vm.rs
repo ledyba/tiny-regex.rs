@@ -16,7 +16,7 @@ impl std::fmt::Display for OpCode {
       Self::Consume(s) => f.write_fmt(format_args!("Consume  {:?}", s)),
       Self::Fork(delta) => f.write_fmt(format_args!("Fork     {:+}", delta)),
       Self::Jump(delta) => f.write_fmt(format_args!("Jump     {:+}", delta)),
-      Self::Fail => write!(f, "Fail"),
+      Self::Fail => f.write_str("Fail"),
     }
   }
 }
