@@ -27,6 +27,14 @@ pub struct Program {
   codes: Vec<OpCode>,
 }
 
+impl Program {
+  pub fn new(node: &Node) -> Self {
+    Self {
+      codes: compile(node),
+    }
+  }
+}
+
 impl std::fmt::Display for Program {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "[\n").unwrap();
@@ -116,13 +124,7 @@ pub fn test(program: &Program, string: &str) -> bool {
   Machine::new(program, string).start()
 }
 
-pub fn compile(node: &Node) -> Program {
-  Program {
-    codes: compile_impl(node)
-  }
-}
-
-fn compile_impl(node: &Node) -> Vec<OpCode> {
+fn compile(node: &Node) -> Vec<OpCode> {
   match node {
     Node::Literal(literal) => {
       let chars = literal.chars().collect::<Vec<char>>();
@@ -135,7 +137,7 @@ fn compile_impl(node: &Node) -> Vec<OpCode> {
     Node::Concat(nodes) => {
       nodes
         .iter()
-        .map(|node| compile_impl(node))
+        .map(|node| compile(node))
         .flatten()
         .collect()
     }
@@ -143,7 +145,7 @@ fn compile_impl(node: &Node) -> Vec<OpCode> {
       let mut codes = Vec::new();
       codes.push(OpCode::Fork(0));
 
-      let mut body = compile_impl(&node);
+      let mut body = compile(&node);
       let body_len = body.len();
       codes.append(&mut body);
 
@@ -158,7 +160,7 @@ fn compile_impl(node: &Node) -> Vec<OpCode> {
       for node in noedes {
         let current = codes.len();
         codes.push(OpCode::Fork(0));
-        let mut body = compile_impl(node);
+        let mut body = compile(node);
         let body_len = body.len();
         codes.append(&mut body);
         jmp_offsets.push(codes.len());
@@ -183,7 +185,7 @@ mod test {
   #[test]
   fn literal_test() {
     let node = ast::literal("abc");
-    let program = compile(&node);
+    let program = Program::new(&node);
     assert!(test(&program, "abc"));
     assert!(!test(&program, "ab"));
     assert!(!test(&program, "abcd"));
@@ -192,7 +194,7 @@ mod test {
   #[test]
   fn repeat_test() {
     let node = ast::repeat(ast::literal("a"));
-    let program = compile(&node);
+    let program = Program::new(&node);
     println!("{}", program);
     assert!(test(&program, ""));
     assert!(test(&program, "a"));
@@ -204,7 +206,7 @@ mod test {
   #[test]
   fn or_test() {
     let node = ast::or(&[ast::literal("a"), ast::literal("b"), ast::literal("c")]);
-    let program = compile(&node);
+    let program = Program::new(&node);
     assert!(!test(&program, ""));
     assert!(test(&program, "a"));
     assert!(test(&program, "b"));
