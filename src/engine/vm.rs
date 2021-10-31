@@ -4,7 +4,7 @@ use crate::ast::Node;
 pub enum OpCode {
   Consume1(char),
   Consume(Vec<char>),
-  Fork(isize),
+  Split(isize),
   Jump(isize),
   Fail,
 }
@@ -14,7 +14,7 @@ impl std::fmt::Display for OpCode {
     match self {
       Self::Consume1(s)  => f.write_fmt(format_args!("Consume1 {}", s)),
       Self::Consume(s) => f.write_fmt(format_args!("Consume  {:?}", s)),
-      Self::Fork(delta) => f.write_fmt(format_args!("Fork     {:+}", delta)),
+      Self::Split(delta) => f.write_fmt(format_args!("Fork     {:+}", delta)),
       Self::Jump(delta) => f.write_fmt(format_args!("Jump     {:+}", delta)),
       Self::Fail => f.write_str("Fail"),
     }
@@ -104,7 +104,7 @@ impl <'a> Machine<'a> {
           }
           th.pc += 1;
         }
-        OpCode::Fork(b) => {
+        OpCode::Split(b) => {
           self.threads.push(Thread{
             pc: ((th.pc as isize) + *b) as usize,
             sp: th.sp,
@@ -145,7 +145,7 @@ fn compile(node: &Node) -> Vec<OpCode> {
     }
     Node::Repeat(node) => {
       let mut codes = Vec::new();
-      codes.push(OpCode::Fork(0));
+      codes.push(OpCode::Split(0));
 
       let mut body = compile(&node);
       let body_len = body.len();
@@ -153,7 +153,7 @@ fn compile(node: &Node) -> Vec<OpCode> {
 
       codes.push(OpCode::Jump(-(body_len as isize) - 1));
       // Fix jump indecies
-      codes[0] = OpCode::Fork((body_len + 2) as isize);
+      codes[0] = OpCode::Split((body_len + 2) as isize);
       codes
     }
     Node::Or(noedes) => {
@@ -161,13 +161,13 @@ fn compile(node: &Node) -> Vec<OpCode> {
       let mut codes = Vec::<OpCode>::new();
       for node in noedes {
         let current = codes.len();
-        codes.push(OpCode::Fork(0));
+        codes.push(OpCode::Split(0));
         let mut body = compile(node);
         let body_len = body.len();
         codes.append(&mut body);
         jmp_offsets.push(codes.len());
         codes.push(OpCode::Jump(0));
-        codes[current] = OpCode::Fork((body_len as isize) + 2);
+        codes[current] = OpCode::Split((body_len as isize) + 2);
       }
       codes.push(OpCode::Fail);
       let codes_len = codes.len();
