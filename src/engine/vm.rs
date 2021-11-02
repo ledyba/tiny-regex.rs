@@ -12,11 +12,16 @@ pub enum OpCode {
 impl std::fmt::Display for OpCode {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     match self {
-      Self::Consume1(s)  => f.write_fmt(format_args!("Consume1 {}", s)),
-      Self::Consume(s) => f.write_fmt(format_args!("Consume  {:?}", s)),
-      Self::Split(delta) => f.write_fmt(format_args!("Fork     {:+}", delta)),
-      Self::Jump(delta) => f.write_fmt(format_args!("Jump     {:+}", delta)),
-      Self::Fail => f.write_str("Fail"),
+      Self::Consume1(s)  =>
+        f.write_fmt(format_args!("Consume1 {}", s)),
+      Self::Consume(s) =>
+        f.write_fmt(format_args!("Consume  {:?}", s)),
+      Self::Split(delta) =>
+        f.write_fmt(format_args!("Fork     {:+}", delta)),
+      Self::Jump(delta) =>
+        f.write_fmt(format_args!("Jump     {:+}", delta)),
+      Self::Fail =>
+        f.write_fmt(format_args!("Fail")),
     }
   }
 }
