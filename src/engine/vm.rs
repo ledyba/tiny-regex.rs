@@ -160,14 +160,14 @@ fn compile(node: &Node) -> Vec<OpCode> {
       let mut jmp_offsets = Vec::<usize>::new();
       let mut codes = Vec::<OpCode>::new();
       for node in noedes {
-        let current = codes.len();
+        let split_idx = codes.len();
         codes.push(OpCode::Split(0));
         let mut body = compile(node);
         let body_len = body.len();
         codes.append(&mut body);
         jmp_offsets.push(codes.len());
         codes.push(OpCode::Jump(0));
-        codes[current] = OpCode::Split((body_len as isize) + 2);
+        codes[split_idx] = OpCode::Split((body_len as isize) + 2);
       }
       codes.push(OpCode::Fail);
       let codes_len = codes.len();
