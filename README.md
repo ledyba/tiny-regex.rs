@@ -14,7 +14,7 @@ For study.
 
 # LICENSE
 
-GPL v3 or later.
+AGPL v3 or later.
 
 # References
 
